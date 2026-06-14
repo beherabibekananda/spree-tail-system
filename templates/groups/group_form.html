@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Spreetail Shared Expenses{% endblock %}
+
+{% block content %}
+<div class="max-w-md w-full mx-auto my-12">
+    <div class="glass p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden">
+        <!-- Background glows -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+
+        <div class="text-center mb-8 relative">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/10">
+                <i class="fa-solid fa-users text-white text-lg"></i>
+            </div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-brand-500 to-indigo-400 bg-clip-text text-transparent">{{ title }}</h2>
+            <p class="text-slate-400 text-sm mt-1">Organize shared bills for flatmates or trips</p>
+        </div>
+
+        <form method="POST" class="space-y-6 relative">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="space-y-2">
+                    <label for="{{ field.id_for_label }}" class="text-sm font-semibold text-slate-300">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-red-400 text-xs mt-1">
+                            {% for error in field.errors %}
+                                <p><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="flex items-center space-x-4 pt-2">
+                <a href="{% url 'groups_dashboard' %}" class="flex-1 text-center glass-btn font-semibold py-3 px-4 rounded-2xl transition-all">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="flex-1 btn-gradient font-bold py-3 px-4 rounded-2xl transition-all transform active:scale-[0.98]">
+                    Save Group
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ group.name }} | Spreetail Shared Expenses{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Breadcrumbs / Back navigation -->
+    <a href="{% url 'groups_dashboard' %}" class="text-brand-500 hover:text-brand-400 text-sm font-semibold transition-colors flex items-center space-x-2">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Groups Dashboard</span>
+    </a>
+
+    <!-- Header block -->
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-extrabold tracking-tight text-white">{{ group.name }}</h1>
+            <p class="text-slate-400 mt-2 max-w-xl">{{ group.description }}</p>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'expense_create' %}?group_id={{ group.id }}" class="glass-btn px-5 py-3 rounded-2xl text-sm font-semibold text-teal-300 flex items-center space-x-2">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span>Add Expense</span>
+            </a>
+            <a href="{% url 'settlement_create' %}?group_id={{ group.id }}" class="glow-indigo px-5 py-3 rounded-2xl text-sm font-semibold text-indigo-300 flex items-center space-x-2">
+                <i class="fa-solid fa-handshake"></i>
+                <span>Record Payment</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Side Column (Balances, Settlements, Members) - Spans 5 columns -->
+        <div class="lg:col-span-5 space-y-8">
+            
+            <!-- User's Personal Balance Summary Card -->
+            <div class="glass p-6 rounded-3xl border border-white/5 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-24 h-24 bg-brand-500/5 rounded-full blur-2xl"></div>
+                <h3 class="text-xs text-slate-500 font-semibold uppercase tracking-widest">Your Group Balance</h3>
+                <div class="mt-2 flex items-baseline space-x-2">
+                    <span class="text-3xl font-extrabold {% if balance_info.net_balance > 0.01 %}text-emerald-400{% elif balance_info.net_balance < -0.01 %}text-rose-400{% else %}text-slate-400{% endif %}">
+                        {% if balance_info.net_balance > 0.01 %}+{{ balance_info.net_balance|floatformat:2 }}{% elif balance_info.net_balance < -0.01 %}{{ balance_info.net_balance|floatformat:2 }}{% else %}0.00{% endif %}
+                    </span>
+                    <span class="text-sm font-semibold text-slate-400">INR</span>
+                </div>
+                <p class="text-sm text-slate-400 mt-2">
+                    {% if balance_info.net_balance > 0.01 %}
+                        Other flatmates owe you this amount in net settlements.
+                    {% elif balance_info.net_balance < -0.01 %}
+                        You owe this net amount to other flatmates.
+                    {% else %}
+                        You are completely settled up!
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Aisha's Net Settlements Card -->
+            <div class="glass p-6 rounded-3xl border border-white/5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-right-left text-brand-500"></i>
+                        <span>Aisha's Settlement Summary</span>
+                    </h3>
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500">Min Transfers</span>
+                </div>
+                
+                {% if suggested_settlements %}
+                    <div class="space-y-3">
+                        {% for s in suggested_settlements %}
+                            <div class="bg-slate-900 border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <span class="font-bold text-rose-300 text-sm">{{ s.debtor }}</span>
+                                    <i class="fa-solid fa-arrow-right-long text-slate-500"></i>
+                                    <span class="font-bold text-emerald-300 text-sm">{{ s.creditor }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-extrabold text-white">{{ s.amount|floatformat:2 }}</span>
+                                    <span class="text-xs text-slate-500 font-semibold block">INR</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-6 text-center border border-dashed border-white/10 rounded-2xl">
+                        <i class="fa-solid fa-circle-check text-emerald-500 text-2xl mb-2"></i>
+                        <p class="text-sm text-slate-400 font-medium">All balances are settled! No payments needed.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Members List & Add Form Card -->
+            <div class="glass p-6 rounded-3xl border border-white/5 space-y-6">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-users-viewfinder text-brand-500"></i>
+                    <span>Household Members</span>
+                </h3>
+                
+                <div class="divide-y divide-white/5 space-y-4">
+                    {% for mb in member_balances %}
+                        <div class="pt-4 first:pt-0 flex items-center justify-between">
+                            <div>
+                                <span class="font-bold text-white text-sm block">
+                                    {{ mb.name }}
+                                    {% if mb.username == user.username %}<span class="text-xs text-slate-500 font-normal">(you)</span>{% endif %}
+                                </span>
+                                <span class="text-[10px] text-slate-500 block">
+                                    Joined: {{ mb.membership.joined_at }}
+                                    {% if mb.membership.left_at %} | Left: {{ mb.membership.left_at }}{% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4">
+                                <div class="text-right">
+                                    <span class="text-sm font-semibold block {% if mb.balance > 0.01 %}text-emerald-400{% elif mb.balance < -0.01 %}text-rose-400{% else %}text-slate-500{% endif %}">
+                                        {% if mb.balance > 0.01 %}+{{ mb.balance|floatformat:2 }}{% else %}{{ mb.balance|floatformat:2 }}{% endif %}
+                                    </span>
+                                </div>
+                                
+                                {% if not mb.membership.left_at %}
+                                    <!-- Exiting membership trigger form -->
+                                    <form method="POST" action="{% url 'group_member_leave' group_id=group.id membership_id=mb.membership.id %}" class="inline-flex">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="left_at" value="{% now 'Y-m-d' %}">
+                                        <button type="submit" title="Mark as left group today" class="text-slate-500 hover:text-red-400 text-xs p-1">
+                                            <i class="fa-solid fa-user-minus"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Add Member Form -->
+                <div class="border-t border-white/5 pt-6 space-y-4">
+                    <h4 class="text-sm font-bold text-slate-300">Add Flatmate to Group</h4>
+                    <form method="POST" action="{% url 'group_member_add' group_id=group.id %}" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="space-y-1">
+                            <label class="text-xs text-slate-400 font-semibold uppercase">Username</label>
+                            {{ member_form.user_username }}
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs text-slate-400 font-semibold uppercase">Joined Date</label>
+                                {{ member_form.joined_at }}
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs text-slate-400 font-semibold uppercase">Left Date (Optional)</label>
+                                {{ member_form.left_at }}
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full btn-gradient font-bold py-2.5 px-4 rounded-xl text-sm transition-all">
+                            Add Member
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Side Column (Rohan's Audit Trail) - Spans 7 columns -->
+        <div class="lg:col-span-7 space-y-8">
+            
+            <!-- Rohan's Audit Trail Ledger Card -->
+            <div class="glass p-6 rounded-3xl border border-white/5 space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-calculator text-indigo-400"></i>
+                        <span>Rohan's Detailed Balance Trail</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Audit log of every transaction contributing to your current balance.</p>
+                </div>
+                
+                {% if balance_info.audit_trail %}
+                    <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                        {% for log in balance_info.audit_trail %}
+                            <div class="border border-white/5 bg-slate-900/40 p-4 rounded-2xl flex items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full 
+                                            {% if log.type == 'expense_paid' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                            {% elif log.type == 'expense_owed' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
+                                            {% elif log.type == 'settlement_paid' %}bg-sky-500/10 text-sky-400 border border-sky-500/20
+                                            {% else %}bg-indigo-500/10 text-indigo-400 border border-indigo-500/20{% endif %}">
+                                            {% if log.type == 'expense_paid' %}Paid Expense
+                                            {% elif log.type == 'expense_owed' %}Owed Split
+                                            {% elif log.type == 'settlement_paid' %}Settlement Sent
+                                            {% else %}Settlement Recv{% endif %}
+                                        </span>
+                                        <span class="text-xs text-slate-500">{{ log.date }}</span>
+                                    </div>
+                                    <p class="font-semibold text-sm text-white mt-1">{{ log.description }}</p>
+                                    <p class="text-xs text-slate-400">{{ log.details }}</p>
+                                </div>
+                                <div class="text-right whitespace-nowrap">
+                                    <span class="font-extrabold text-sm {% if log.net_effect > 0.00 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                                        {% if log.net_effect > 0.00 %}+{% endif %}{{ log.net_effect|floatformat:2 }}
+                                    </span>
+                                    <span class="text-[10px] text-slate-500 font-semibold block">INR</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-8 text-center border border-dashed border-white/10 rounded-2xl">
+                        <i class="fa-solid fa-clipboard-question text-slate-600 text-3xl mb-2"></i>
+                        <p class="text-sm text-slate-400">No transactions recorded for you in this group.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Expenses List Card -->
+            <div class="glass p-6 rounded-3xl border border-white/5 space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center justify-between">
+                    <span>Recent Expenses</span>
+                    <a href="{% url 'expenses_list' %}?group_id={{ group.id }}" class="text-xs text-brand-500 hover:underline">View All</a>
+                </h3>
+                
+                {% if expenses %}
+                    <div class="divide-y divide-white/5">
+                        {% for exp in expenses %}
+                            <div class="py-4 first:pt-0 last:pb-0 flex items-center justify-between">
+                                <div>
+                                    <span class="font-bold text-white text-sm block">{{ exp.description }}</span>
+                                    <span class="text-[10px] text-slate-500 block">
+                                        Paid by {{ exp.paid_by.username }} on {{ exp.expense_date }} | Split: {{ exp.get_split_type_display|default:exp.split_type }}
+                                    </span>
+                                </div>
+                                <div class="text-right flex items-center space-x-3">
+                                    <div>
+                                        <span class="font-bold text-white text-sm block">{{ exp.total_amount }} {{ exp.currency }}</span>
+                                        {% if exp.currency != 'INR' %}
+                                            <span class="text-[10px] text-slate-500 block">({{ exp.amount_in_inr }} INR)</span>
+                                        {% endif %}
+                                    </div>
+                                    <form method="POST" action="{% url 'expense_delete' expense_id=exp.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-slate-500 hover:text-red-400 p-1" onclick="return confirm('Are you sure you want to delete this expense?')">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-400 text-center py-4">No expenses recorded yet.</p>
+                {% endif %}
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
