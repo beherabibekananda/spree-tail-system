@@ -1,0 +1,23 @@
+date,description,amount,currency,paid_by,split_type,participants,notes
+2024-02-05,February Rent,45000,INR,Aisha,equal,"Aisha, Rohan, Priya, Meera",Monthly apartment rent
+2024-02-10,Groceries,1200,INR,Rohan,equal,"Aisha, Rohan, Priya, Meera",
+2024-02-12,Internet bill,"₹1,500.00",INR,Priya,equal,"Aisha, Rohan, Priya, Meera",Broadband subscription
+2024-02-15,Dinner at Cafe,3000,INR,Aisha,exact,"Aisha, Rohan, Priya","Aisha:1000, Rohan:1200, Priya:800"
+2024-02-20,Cab ride,450,INR,Meera,equal,"Aisha, Rohan, Priya, Meera",
+2024-02-25,Electricity bill,3500,INR,Rohan,percentage,"Aisha, Rohan, Priya, Meera","Aisha:30, Rohan:20, Priya:25, Meera:25"
+2024-02-25,Electricity bill,3500,INR,Rohan,percentage,"Aisha, Rohan, Priya, Meera","Aisha:30, Rohan:20, Priya:25, Meera:25"
+2024-03-01,Trip Drinks,$120,USD,Dev,equal,"Aisha, Rohan, Priya, Dev",Dev joined for trip
+2024-03-02,Trip Dinner,45,,Dev,equal,"Aisha, Rohan, Priya, Dev",Trip dinner of 45 dollars but no currency symbol
+2024-03-05,Trip Cab,80,USD,Priya,equal,"Aisha, Rohan, Priya, Dev",
+2024-03-05,Trip Cab,90,USD,Priya,equal,"Aisha, Rohan, Priya, Dev",Possible duplicate or extra charge?
+2024-03-10,Rohan paid Aisha back,2000,INR,Rohan,equal,Aisha,Settlement of last month's balance
+2024-03-12,March Groceries,1800,INR,Rohn,equal,"Aisha, Rohan, Priya, Meera",
+2024-03-15,Snacks,Rs.600,INR,Priya,equal,"Aisha, Rohan, Priya, Meera",
+2024-03-20,March Gas bill,1200,INR,Aisha,,"Aisha, Rohan, Priya, Meera",
+2024-03-22,March Water bill,800,INR,Meera,equal,"Aisha, Rohan, Priya, Meera, Sam",Water charge
+2024-04-10,April Cleaning supplies,600,INR,Aisha,equal,"Aisha, Rohan, Priya, Meera",Supplies for the house
+2024-04-18,April Groceries,2400,INR,Aisha,equal,"Aisha, Rohan, Priya, Sam",Sam joined now
+2024-04-20,Refund for duplicate groceries,-1200,INR,Rohan,equal,"Aisha, Rohan, Priya, Sam",Refund for double grocery charge
+15/05/2024,May Electricity bill,2800,INR,Rohan,share,"Aisha, Rohan, Priya, Sam","Aisha:2, Rohan:2, Priya:1, Sam:1"
+05-20-2024,May Water bill,900,INR,Priya,equal,"Aisha, Rohan, Priya, Sam",
+2024-05-25,June planning snacks,1500,INR,,equal,"Aisha, Rohan, Priya, Sam",Snacks for planning meet

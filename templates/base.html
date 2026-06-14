@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Spreetail Shared Expenses{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf9',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            500: '#14b8a6', // teal
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            900: '#115e59',
+                        },
+                        darkbg: '#0b0f19',
+                        darkcard: '#161c2a',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #080b11;
+            color: #f3f4f6;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Premium mesh gradient glow effects */
+        .glow-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -10;
+            overflow: hidden;
+            pointer-events: none;
+            background-color: #080b11;
+        }
+        .glow-blob-1 {
+            position: absolute;
+            top: -20%;
+            left: -20%;
+            width: 70vw;
+            height: 70vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 100%);
+            filter: blur(80px);
+            animation: pulse-glow 15s infinite alternate;
+        }
+        .glow-blob-2 {
+            position: absolute;
+            bottom: -30%;
+            right: -10%;
+            width: 80vw;
+            height: 80vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, rgba(236, 72, 153, 0.04) 50%, transparent 100%);
+            filter: blur(100px);
+            animation: pulse-glow 20s infinite alternate-reverse;
+        }
+        .glow-blob-3 {
+            position: absolute;
+            top: 25%;
+            right: -10%;
+            width: 45vw;
+            height: 45vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(20, 184, 166, 0.1) 0%, rgba(6, 182, 212, 0.03) 50%, transparent 100%);
+            filter: blur(80px);
+        }
+        .glow-blob-4 {
+            position: absolute;
+            bottom: 20%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(234, 179, 8, 0.06) 0%, rgba(249, 115, 22, 0.02) 50%, transparent 100%);
+            filter: blur(90px);
+        }
+        
+        @keyframes pulse-glow {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(4%, 4%) scale(1.1);
+            }
+        }
+        
+        /* Ultra premium glassmorphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 
+                0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-btn {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #2dd4bf;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .glass-btn:hover {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%);
+            border-color: rgba(20, 184, 166, 0.4);
+            box-shadow: 
+                0 4px 20px rgba(20, 184, 166, 0.25),
+                0 0 15px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #14b8a6 0%, #6366f1 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #0d9488 0%, #4f46e5 100%);
+            box-shadow: 
+                0 6px 20px rgba(99, 102, 241, 0.5),
+                0 0 25px rgba(20, 184, 166, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .glow-indigo {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(244, 63, 94, 0.12) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #818cf8;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .glow-indigo:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(244, 63, 94, 0.25) 100%);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        /* Customize scrollbars to be sleek and glass-like */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(8, 11, 17, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Auto-style all inputs to match glass styling */
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea {
+            background-color: rgba(15, 23, 42, 0.4) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 1rem !important; /* rounded-2xl */
+            color: #ffffff !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-top: 0.75rem !important;
+            padding-bottom: 0.75rem !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: rgba(20, 184, 166, 0.5) !important;
+            box-shadow: 
+                0 0 15px rgba(20, 184, 166, 0.25),
+                inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            outline: none !important;
+            background-color: rgba(15, 23, 42, 0.55) !important;
+        }
+        
+        /* Options inside select dropdown */
+        select option {
+            background-color: #0d131f !important;
+            color: #ffffff !important;
+        }
+
+        /* Customize default file inputs to look clean */
+        input[type="file"] {
+            background-color: rgba(15, 23, 42, 0.3) !important;
+            border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+            border-radius: 1rem !important;
+            padding: 1.5rem !important;
+            color: #94a3b8 !important;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        input[type="file"]:hover {
+            border-color: rgba(20, 184, 166, 0.4) !important;
+            background-color: rgba(15, 23, 42, 0.45) !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="flex flex-col h-full min-h-screen">
+    <!-- Glowing background elements -->
+    <div class="glow-bg">
+        <div class="glow-blob-1"></div>
+        <div class="glow-blob-2"></div>
+        <div class="glow-blob-3"></div>
+        <div class="glow-blob-4"></div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/5">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <i class="fa-solid fa-receipt text-white text-lg"></i>
+            </div>
+            <div>
+                <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-brand-500 to-indigo-400 bg-clip-text text-transparent">Spreetail</span>
+                <span class="text-xs block text-slate-400 font-semibold tracking-widest uppercase">Shared Expenses</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-6">
+            {% if user.is_authenticated %}
+                <a href="{% url 'groups_dashboard' %}" class="text-slate-300 hover:text-brand-500 transition-colors flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'expenses_list' %}" class="text-slate-300 hover:text-brand-500 transition-colors flex items-center space-x-2">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Expenses</span>
+                </a>
+                <a href="{% url 'import_csv' %}" class="text-slate-300 hover:text-brand-500 transition-colors flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Import CSV</span>
+                </a>
+                <div class="h-5 w-[1px] bg-white/10"></div>
+                <span class="text-slate-300 text-sm hidden sm:inline flex items-center space-x-2">
+                    <i class="fa-solid fa-user-circle text-brand-500"></i>
+                    <span>Hi, <strong>{{ user.first_name|default:user.username }}</strong></span>
+                </span>
+                <a href="{% url 'logout' %}" class="glass-btn px-4 py-2 rounded-xl text-sm font-medium text-teal-300 flex items-center space-x-2">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="text-slate-300 hover:text-brand-500 transition-colors text-sm font-semibold">Login</a>
+                <a href="{% url 'register' %}" class="glass-btn px-4 py-2 rounded-xl text-sm font-medium text-teal-300">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Message Banners -->
+        {% if messages %}
+            <div class="space-y-4 mb-6">
+                {% for message in messages %}
+                    <div class="p-4 rounded-xl flex items-center space-x-3 {% if message.tags == 'error' %}bg-red-500/10 border border-red-500/20 text-red-300{% elif message.tags == 'success' %}bg-emerald-500/10 border border-emerald-500/20 text-emerald-300{% else %}bg-blue-500/10 border border-blue-500/20 text-blue-300{% endif %}">
+                        {% if message.tags == 'error' %}
+                            <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                        {% elif message.tags == 'success' %}
+                            <i class="fa-solid fa-circle-check text-lg"></i>
+                        {% else %}
+                            <i class="fa-solid fa-circle-info text-lg"></i>
+                        {% endif %}
+                        <div class="text-sm font-medium flex-1">{{ message }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-white/5 py-6 text-center text-sm text-slate-500">
+        <p>&copy; 2026 Spreetail Expenses App. Handcrafted with modern design patterns.</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
