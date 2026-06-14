@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Expense | Spreetail Shared Expenses{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl w-full mx-auto my-8">
+    <div class="glass p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden">
+        <!-- Background glows -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+
+        <div class="text-center mb-8 relative">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/10">
+                <i class="fa-solid fa-receipt text-white text-lg"></i>
+            </div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-brand-500 to-indigo-400 bg-clip-text text-transparent">Log New Expense</h2>
+            <p class="text-slate-400 text-sm mt-1">Specify amounts, currencies, and split distributions.</p>
+        </div>
+
+        <form method="POST" id="expense-form" class="space-y-6 relative">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Group Selection -->
+                <div class="space-y-1">
+                    <label for="id_group" class="text-sm font-semibold text-slate-300">Group</label>
+                    {{ form.group }}
+                </div>
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label for="id_description" class="text-sm font-semibold text-slate-300">Description</label>
+                    {{ form.description }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Total Amount -->
+                <div class="space-y-1">
+                    <label for="id_total_amount" class="text-sm font-semibold text-slate-300">Total Amount</label>
+                    {{ form.total_amount }}
+                </div>
+                <!-- Currency -->
+                <div class="space-y-1">
+                    <label for="id_currency" class="text-sm font-semibold text-slate-300">Currency</label>
+                    {{ form.currency }}
+                </div>
+                <!-- Exchange Rate -->
+                <div class="space-y-1">
+                    <label for="id_exchange_rate" class="text-sm font-semibold text-slate-300">Exchange Rate</label>
+                    {{ form.exchange_rate }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Paid By -->
+                <div class="space-y-1">
+                    <label for="id_paid_by" class="text-sm font-semibold text-slate-300">Paid By</label>
+                    {{ form.paid_by }}
+                </div>
+                <!-- Expense Date -->
+                <div class="space-y-1">
+                    <label for="id_expense_date" class="text-sm font-semibold text-slate-300">Date</label>
+                    {{ form.expense_date }}
+                </div>
+                <!-- Split Type -->
+                <div class="space-y-1">
+                    <label for="id_split_type" class="text-sm font-semibold text-slate-300">Split Type</label>
+                    {{ form.split_type }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Category -->
+                <div class="space-y-1">
+                    <label for="id_category" class="text-sm font-semibold text-slate-300">Category (Optional)</label>
+                    {{ form.category }}
+                </div>
+                <!-- Notes -->
+                <div class="space-y-1">
+                    <label for="id_notes" class="text-sm font-semibold text-slate-300">Notes (Optional)</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <!-- Interactive Split Participants Section -->
+            <div class="bg-slate-900/60 border border-white/5 p-6 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider">Split Distribution</h3>
+                <p class="text-xs text-slate-400">Select which members participate and specify shares if applicable.</p>
+                
+                <div id="participants-container" class="space-y-3">
+                    <!-- Javascript will dynamically inject checkboxes here -->
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex items-center space-x-4 pt-4">
+                <a href="{% url 'groups_dashboard' %}" class="flex-1 text-center glass-btn font-semibold py-3.5 px-4 rounded-2xl transition-all">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="flex-1 btn-gradient font-bold py-3.5 px-4 rounded-2xl transition-all transform active:scale-[0.98]">
+                    Log Expense
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const groupMembers = {{ group_members_json|safe }};
+    
+    const groupSelect = document.getElementById('id_group');
+    const currencySelect = document.getElementById('id_currency');
+    const rateInput = document.getElementById('id_exchange_rate');
+    const paidBySelect = document.getElementById('id_paid_by');
+    const splitTypeSelect = document.getElementById('id_split_type');
+    const pContainer = document.getElementById('participants-container');
+    
+    // Auto-update exchange rate on currency selection
+    currencySelect.addEventListener('change', function() {
+        if (this.value === 'USD') {
+            rateInput.value = '83.5000'; // Pre-fill standard RBI rate
+        } else {
+            rateInput.value = '1.0000';
+        }
+    });
+    
+    // Update participant checkboxes and paid-by selectors based on active members of group
+    function updateMembers() {
+        const groupId = groupSelect.value;
+        const members = groupMembers[groupId] || [];
+        
+        // 1. Update Paid By dropdown
+        paidBySelect.innerHTML = '';
+        members.forEach(member => {
+            const opt = document.createElement('option');
+            opt.value = member.id;
+            opt.textContent = member.name;
+            paidBySelect.appendChild(opt);
+        });
+        
+        // 2. Render Split check-boxes and custom inputs
+        renderParticipants(members);
+    }
+    
+    function renderParticipants(members) {
+        pContainer.innerHTML = '';
+        const splitType = splitTypeSelect.value;
+        
+        if (members.length === 0) {
+            pContainer.innerHTML = '<p class="text-xs text-slate-500">No members in selected group.</p>';
+            return;
+        }
+        
+        members.forEach(m => {
+            const div = document.createElement('div');
+            div.className = "flex items-center justify-between border-b border-white/5 pb-2 last:border-b-0";
+            
+            // Checkbox and Label
+            const leftDiv = document.createElement('div');
+            leftDiv.className = "flex items-center space-x-3";
+            
+            const check = document.createElement('input');
+            check.type = "checkbox";
+            check.name = "split_participants";
+            check.value = m.id;
+            check.id = `user_check_${m.id}`;
+            check.checked = true; // default select all
+            check.className = "w-4 h-4 rounded text-brand-500 bg-slate-950 border-white/10 outline-none focus:ring-0";
+            
+            const label = document.createElement('label');
+            label.htmlFor = `user_check_${m.id}`;
+            label.className = "text-sm font-semibold text-slate-300 cursor-pointer";
+            label.textContent = m.name;
+            
+            leftDiv.appendChild(check);
+            leftDiv.appendChild(label);
+            div.appendChild(leftDiv);
+            
+            // Custom input field based on Split Type
+            if (splitType !== 'equal') {
+                const rightDiv = document.createElement('div');
+                rightDiv.className = "flex items-center space-x-2";
+                
+                const input = document.createElement('input');
+                input.type = "number";
+                input.step = "any";
+                input.name = `split_val_${m.id}`;
+                input.id = `split_val_${m.id}`;
+                input.value = splitType === 'percentage' ? '0' : '1';
+                input.className = "w-20 bg-slate-950 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white text-center outline-none focus:border-brand-500";
+                
+                const suffix = document.createElement('span');
+                suffix.className = "text-xs text-slate-500 font-semibold";
+                if (splitType === 'exact') suffix.textContent = "INR";
+                else if (splitType === 'percentage') suffix.textContent = "%";
+                else if (splitType === 'share') suffix.textContent = "share(s)";
+                
+                rightDiv.appendChild(input);
+                rightDiv.appendChild(suffix);
+                div.appendChild(rightDiv);
+                
+                // Disable input if checkbox is unchecked
+                check.addEventListener('change', function() {
+                    input.disabled = !this.checked;
+                    if (input.disabled) input.value = '0';
+                });
+            }
+            
+            pContainer.appendChild(div);
+        });
+    }
+    
+    // Wire up event listeners
+    groupSelect.addEventListener('change', updateMembers);
+    splitTypeSelect.addEventListener('change', updateMembers);
+    
+    // Initial run
+    updateMembers();
+</script>
+{% endblock %}

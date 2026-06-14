@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Payment | Spreetail Shared Expenses{% endblock %}
+
+{% block content %}
+<div class="max-w-md w-full mx-auto my-12">
+    <div class="glass p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden">
+        <!-- Background glows -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+
+        <div class="text-center mb-8 relative">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/10">
+                <i class="fa-solid fa-handshake text-white text-lg"></i>
+            </div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-brand-500 to-indigo-400 bg-clip-text text-transparent">Record Payment</h2>
+            <p class="text-slate-400 text-sm mt-1">Record peer-to-peer settlement transfers.</p>
+        </div>
+
+        <form method="POST" class="space-y-5 relative">
+            {% csrf_token %}
+            
+            <div class="space-y-1">
+                <label for="id_group" class="text-sm font-semibold text-slate-300">Group</label>
+                {{ form.group }}
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label for="id_payer" class="text-sm font-semibold text-slate-300">Who Paid</label>
+                    {{ form.payer }}
+                </div>
+                <div class="space-y-1">
+                    <label for="id_receiver" class="text-sm font-semibold text-slate-300">Who Received</label>
+                    {{ form.receiver }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label for="id_amount" class="text-sm font-semibold text-slate-300">Amount (INR)</label>
+                    {{ form.amount }}
+                </div>
+                <div class="space-y-1">
+                    <label for="id_settlement_date" class="text-sm font-semibold text-slate-300">Payment Date</label>
+                    {{ form.settlement_date }}
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label for="id_notes" class="text-sm font-semibold text-slate-300">Notes (Optional)</label>
+                {{ form.notes }}
+            </div>
+
+            <div class="flex items-center space-x-4 pt-4">
+                <a href="{% url 'groups_dashboard' %}" class="flex-1 text-center glass-btn font-semibold py-3.5 px-4 rounded-2xl transition-all">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="flex-1 btn-gradient font-bold py-3.5 px-4 rounded-2xl transition-all transform active:scale-[0.98]">
+                    Record Settlement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const groupMembers = {{ group_members_json|safe }};
+    const groupSelect = document.getElementById('id_group');
+    const payerSelect = document.getElementById('id_payer');
+    const receiverSelect = document.getElementById('id_receiver');
+    
+    function filterMembers() {
+        const groupId = groupSelect.value;
+        const members = groupMembers[groupId] || [];
+        
+        // Save previous selections if any
+        const prevPayer = payerSelect.value;
+        const prevRecv = receiverSelect.value;
+        
+        payerSelect.innerHTML = '';
+        receiverSelect.innerHTML = '';
+        
+        members.forEach(m => {
+            // Add to payer option
+            const optP = document.createElement('option');
+            optP.value = m.id;
+            optP.textContent = m.name;
+            if (m.id == prevPayer) optP.selected = true;
+            payerSelect.appendChild(optP);
+            
+            // Add to receiver option
+            const optR = document.createElement('option');
+            optR.value = m.id;
+            optR.textContent = m.name;
+            if (m.id == prevRecv) optR.selected = true;
+            receiverSelect.appendChild(optR);
+        });
+    }
+    
+    groupSelect.addEventListener('change', filterMembers);
+    filterMembers();
+</script>
+{% endblock %}
