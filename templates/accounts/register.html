@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Register | Spreetail Shared Expenses{% endblock %}
+
+{% block content %}
+<div class="max-w-md w-full mx-auto my-6">
+    <div class="glass p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden">
+        <!-- Background glows -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+
+        <div class="text-center mb-8 relative">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/10">
+                <i class="fa-solid fa-user-plus text-white text-lg"></i>
+            </div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-brand-500 to-indigo-400 bg-clip-text text-transparent">Create Account</h2>
+            <p class="text-slate-400 text-sm mt-1">Register to start splitting bills with flatmates</p>
+        </div>
+
+        <form method="POST" action="{% url 'register' %}" class="space-y-5 relative">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="space-y-1">
+                    <label for="{{ field.id_for_label }}" class="text-sm font-semibold text-slate-300">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-red-400 text-xs mt-1 space-y-1">
+                            {% for error in field.errors %}
+                                <p><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if field.help_text %}
+                        <p class="text-slate-500 text-xs mt-1">{{ field.help_text }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit"
+                    class="w-full btn-gradient font-bold py-3.5 px-4 rounded-2xl transition-all transform active:scale-[0.98] mt-2">
+                Sign Up
+            </button>
+        </form>
+
+        <div class="mt-8 text-center text-sm text-slate-400 border-t border-white/5 pt-6 relative">
+            Already have an account? 
+            <a href="{% url 'login' %}" class="text-brand-500 hover:text-brand-400 font-semibold transition-colors">Sign in here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
