@@ -56,12 +56,12 @@ class Command(BaseCommand):
         # Dev: Joined for trip (Feb onwards)
         
         memberships = [
-            {"username": "aisha", "joined_at": "2024-02-01", "left_at": None},
-            {"username": "rohan", "joined_at": "2024-02-01", "left_at": None},
-            {"username": "priya", "joined_at": "2024-02-01", "left_at": None},
-            {"username": "meera", "joined_at": "2024-02-01", "left_at": "2024-03-31"},
-            {"username": "sam", "joined_at": "2024-04-15", "left_at": None},
-            {"username": "dev", "joined_at": "2024-02-01", "left_at": None}
+            {"username": "aisha", "joined_at": "2026-02-01", "left_at": None},
+            {"username": "rohan", "joined_at": "2026-02-01", "left_at": None},
+            {"username": "priya", "joined_at": "2026-02-01", "left_at": None},
+            {"username": "meera", "joined_at": "2026-02-01", "left_at": "2026-03-31"},
+            {"username": "sam", "joined_at": "2026-04-15", "left_at": None},
+            {"username": "dev", "joined_at": "2026-02-01", "left_at": None}
         ]
 
         for m in memberships:
