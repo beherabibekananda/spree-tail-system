@@ -32,6 +32,11 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://spree-tail-system.onrender.com',
+    'https://*.onrender.com',
+]
+
 
 # Application definition
 
