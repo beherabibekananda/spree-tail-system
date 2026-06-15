@@ -54,6 +54,44 @@
             Don't have an account? 
             <a href="{% url 'register' %}" class="text-brand-500 hover:text-brand-400 font-semibold transition-colors">Register here</a>
         </div>
+
+        <!-- Quick Demo Login -->
+        <div class="mt-6 border-t border-white/5 pt-6 relative">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3 text-center">Quick Demo Login</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="quickLogin('aisha')" class="bg-slate-950/40 hover:bg-brand-500/20 border border-white/5 hover:border-brand-500/30 rounded-xl py-2 text-xs text-slate-400 hover:text-white transition-all text-center font-medium">
+                    Aisha
+                </button>
+                <button type="button" onclick="quickLogin('rohan')" class="bg-slate-950/40 hover:bg-brand-500/20 border border-white/5 hover:border-brand-500/30 rounded-xl py-2 text-xs text-slate-400 hover:text-white transition-all text-center font-medium">
+                    Rohan
+                </button>
+                <button type="button" onclick="quickLogin('priya')" class="bg-slate-950/40 hover:bg-brand-500/20 border border-white/5 hover:border-brand-500/30 rounded-xl py-2 text-xs text-slate-400 hover:text-white transition-all text-center font-medium">
+                    Priya
+                </button>
+                <button type="button" onclick="quickLogin('meera')" class="bg-slate-950/40 hover:bg-brand-500/20 border border-white/5 hover:border-brand-500/30 rounded-xl py-2 text-xs text-slate-400 hover:text-white transition-all text-center font-medium">
+                    Meera
+                </button>
+                <button type="button" onclick="quickLogin('sam')" class="bg-slate-950/40 hover:bg-brand-500/20 border border-white/5 hover:border-brand-500/30 rounded-xl py-2 text-xs text-slate-400 hover:text-white transition-all text-center font-medium">
+                    Sam
+                </button>
+                <button type="button" onclick="quickLogin('dev')" class="bg-slate-950/40 hover:bg-brand-500/20 border border-white/5 hover:border-brand-500/30 rounded-xl py-2 text-xs text-slate-400 hover:text-white transition-all text-center font-medium">
+                    Dev
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-3 text-center">Select any flatmate to auto-fill and login with password <code class="text-brand-400 font-mono">password123</code></p>
+        </div>
     </div>
 </div>
+
+<script>
+    function quickLogin(username) {
+        document.getElementById('id_username').value = username;
+        document.getElementById('id_password').value = 'password123';
+        // Submit the login form
+        const form = document.querySelector('form');
+        if (form) {
+            form.submit();
+        }
+    }
+</script>
 {% endblock %}
