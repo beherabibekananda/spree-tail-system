@@ -1,7 +1,7 @@
 import json
 import re
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 from django.contrib.auth.models import User
 from apps.groups.models import GroupMembership
 from .parser import parse_date, clean_amount
@@ -19,6 +19,12 @@ def get_fuzzy_match(name, known_names):
     if name in known_names:
         return name
         
+    # Check if any word in the name is a known name (e.g. "Priya S" -> "Priya")
+    for word in name.split():
+        word_clean = re.sub(r'[^a-zA-Z]', '', word)
+        if word_clean in known_names:
+            return word_clean
+
     # Check for minor edits/typos (length differences, character swaps)
     for kn in known_names:
         # If one edit away (Levenshtein distance <= 2)
@@ -36,6 +42,10 @@ def detect_anomalies(rows, group_id):
     """
     anomalies = []
     known_names = ['aisha', 'rohan', 'priya', 'meera', 'sam', 'dev']
+    
+    # Load memberships of the group for dynamic date checks
+    memberships = GroupMembership.objects.filter(group_id=group_id).select_related('user')
+    membership_map = {m.user.username.lower(): m for m in memberships}
     
     # Store hashes for exact duplicate checks
     seen_hashes = {}
@@ -55,7 +65,8 @@ def detect_anomalies(rows, group_id):
         curr = row.get('currency', '')
         paid_by_raw = row.get('paid_by', '')
         split_raw = row.get('split_type', '')
-        parts_raw = row.get('participants', '')
+        # Support both 'participants' (old) and 'split_with' (new)
+        parts_raw = row.get('participants') or row.get('split_with') or ''
         notes = row.get('notes', '')
         
         # Clean amount
@@ -93,7 +104,8 @@ def detect_anomalies(rows, group_id):
 
         # --- 1. Exact Duplicate Row Check ---
         # Generate row hash based on all fields
-        row_str = f"{row['date_raw']}|{row['description']}|{row['amount_raw']}|{row['paid_by_raw']}|{row['split_type']}|{row['participants_raw']}"
+        normalized_parts = ",".join(sorted([p.strip().lower() for p in row['participants_raw'].replace(';', ',').split(',') if p.strip()]))
+        row_str = f"{row['date_raw']}|{row['description']}|{row['amount_raw']}|{row['paid_by_raw']}|{row['split_type']}|{normalized_parts}"
         if row_str in seen_hashes:
             flag_anomaly(
                 'Exact Duplicate',
@@ -204,6 +216,12 @@ def detect_anomalies(rows, group_id):
                 "The split_type field is empty.",
                 'Default to equal split'
             )
+        elif split_clean == 'unequal':
+            flag_anomaly(
+                'Invalid Split Type',
+                "The split_type is 'unequal', which represents exact splits.",
+                'Normalize to exact split'
+            )
         elif split_clean not in ['equal', 'exact', 'percentage', 'share']:
             flag_anomaly(
                 'Invalid Split Type',
@@ -212,7 +230,7 @@ def detect_anomalies(rows, group_id):
             )
 
         # Parse participants list
-        participants_raw_list = [p.strip().lower() for p in row['participants_raw'].split(',') if p.strip()]
+        participants_raw_list = [p.strip().lower() for p in row['participants_raw'].replace(';', ',').split(',') if p.strip()]
         
         # Check participants list names
         valid_pids = []
@@ -239,20 +257,39 @@ def detect_anomalies(rows, group_id):
             )
 
         # --- 5 & 6. Membership date checks ---
-        # Meera left end of March: 2024-03-31
-        # Sam joined mid-April: 2024-04-15
         for p_raw in participants_raw_list:
             p_match = get_fuzzy_match(p_raw, known_names)
-            if p_match == 'meera' and parsed_d > datetime.strptime("2024-03-31", "%Y-%m-%d").date():
+            if not p_match:
+                continue
+            
+            # Dynamic membership check
+            m_record = membership_map.get(p_match)
+            if m_record:
+                joined_at = m_record.joined_at
+                left_at = m_record.left_at
+            else:
+                # Fallback to defaults based on the year of the expense date
+                year_val = parsed_d.year
+                if p_match == 'meera':
+                    joined_at = date(year_val, 2, 1)
+                    left_at = date(year_val, 3, 31)
+                elif p_match == 'sam':
+                    joined_at = date(year_val, 4, 15)
+                    left_at = None
+                else:
+                    joined_at = date(year_val, 2, 1)
+                    left_at = None
+
+            if left_at and parsed_d > left_at:
                 flag_anomaly(
                     'Expense After Exit',
-                    f"Meera is included in the split for {parsed_d}, but she moved out on 2024-03-31.",
+                    f"Meera is included in the split for {parsed_d}, but she moved out on {left_at}.",
                     'Remove Meera from split and redistribute'
                 )
-            elif p_match == 'sam' and parsed_d < datetime.strptime("2024-04-15", "%Y-%m-%d").date():
+            elif joined_at and parsed_d < joined_at:
                 flag_anomaly(
                     'Expense Before Join',
-                    f"Sam is included in the split for {parsed_d}, but he joined on 2024-04-15.",
+                    f"Sam is included in the split for {parsed_d}, but he joined on {joined_at}.",
                     'Remove Sam from split and redistribute'
                 )
 

@@ -67,3 +67,63 @@ class AnomalyDetectorTestCase(TestCase):
         dup_anoms = [a for a in anoms if a['issue_type'] == 'Exact Duplicate']
         self.assertEqual(dup_anoms[0]['row_number'], 2)
 
+    def test_detect_anomalies_new_csv_format(self):
+        # Test new CSV columns: split_with, split_details, and date format Mar-14
+        test_rows = [
+            {
+                'date': 'Mar-14',
+                'description': 'Airport cab',
+                'paid_by': 'rohan',
+                'amount': '1100',
+                'currency': 'INR',
+                'split_type': 'equal',
+                'split_with': 'Aisha;Rohan;Priya;Dev',
+                'split_details': '',
+                'notes': ''
+            },
+            {
+                'date': '20-02-2026',
+                'description': 'Aisha birthday cake',
+                'paid_by': 'Rohan',
+                'amount': '1500',
+                'currency': 'INR',
+                'split_type': 'percentage',
+                'split_with': 'Rohan;Priya;Meera',
+                'split_details': 'Rohan 70; Priya 15; Meera 15',
+                'notes': ''
+            },
+            {
+                'date': '2026-02-20',
+                'description': 'Unequal Rent share',
+                'paid_by': 'Rohan',
+                'amount': '1500',
+                'currency': 'INR',
+                'split_type': 'unequal',
+                'split_with': 'Rohan;Priya;Meera',
+                'split_details': 'Rohan 700; Priya 400; Meera 400',
+                'notes': ''
+            }
+        ]
+
+        anoms = detect_anomalies(test_rows, self.group.id)
+        
+        # We expect:
+        # Row 1: Inconsistent Date Format (Mar-14 normalized to 2026-03-14)
+        # Row 2: Inconsistent Date Format (20-02-2026 normalized to 2026-02-20)
+        # Row 3: Invalid Split Type (unequal normalized to exact)
+        issue_types = [a['issue_type'] for a in anoms]
+        self.assertIn('Inconsistent Date Format', issue_types)
+        self.assertIn('Invalid Split Type', issue_types)
+
+        unequal_anom = [a for a in anoms if a['issue_type'] == 'Invalid Split Type' and 'unequal' in a['issue_description']]
+        self.assertEqual(unequal_anom[0]['proposed_action'], 'Normalize to exact split')
+        
+        # Confirm that custom split was successfully parsed
+        # Let's verify by parsing the custom split string directly
+        from apps.importer.parser import parse_custom_split
+        parsed_custom = parse_custom_split('Rohan 70; Priya 15; Meera 15')
+        self.assertEqual(parsed_custom['rohan'], 70.0)
+        self.assertEqual(parsed_custom['priya'], 15.0)
+        self.assertEqual(parsed_custom['meera'], 15.0)
+
+

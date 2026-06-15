@@ -13,8 +13,9 @@ def parse_date(date_str):
     formats = [
         '%Y-%m-%d',
         '%d/%m/%Y',
-        '%m-%d-%Y',
         '%d-%m-%Y',
+        '%m-%d-%Y',
+        '%m/%d/%Y',
         '%Y/%m/%d'
     ]
     for fmt in formats:
@@ -22,6 +23,22 @@ def parse_date(date_str):
             return datetime.strptime(date_str, fmt).date()
         except ValueError:
             continue
+            
+    # Try formats like 'Mar-14' (Month-Day)
+    for fmt in ['%b-%d', '%d-%b', '%d %b', '%b %d']:
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            return dt.replace(year=2026).date()
+        except ValueError:
+            continue
+
+    # Try formats with 2-digit or 4-digit years like 'Mar-26'
+    for fmt in ['%b-%y', '%y-%b', '%b-%Y', '%Y-%b']:
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except ValueError:
+            continue
+            
     return None
 
 def clean_amount(amount_str):
@@ -46,18 +63,31 @@ def clean_amount(amount_str):
 def parse_custom_split(notes_str):
     """
     Parses custom split mapping from notes if formatted as 'Name:Value, Name:Value...'
+    or 'Name Value; Name Value...' (supporting percentage signs and space separators).
     Returns a dict of {username.lower(): value (float)} or None if no match.
     """
     if not notes_str:
         return None
     
-    # Pattern: Name:Value (separated by commas or semicolons)
-    pattern = r'([a-zA-Z]+)\s*:\s*(-?\d+(?:\.\d+)?)'
-    matches = re.findall(pattern, notes_str)
-    if not matches:
+    notes_str = notes_str.strip()
+    if not notes_str:
         return None
         
+    # Strip percent signs
+    notes_str = notes_str.replace('%', '')
+    
+    # Split by comma or semicolon
+    parts = re.split(r'[;,]', notes_str)
     res = {}
-    for name, val in matches:
-        res[name.lower().strip()] = float(val)
-    return res
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Match "Name:Value" or "Name Value". Value can be a decimal, potentially negative.
+        match = re.match(r'^([a-zA-Z\s]+?)(?::|\s+)(-?\d+(?:\.\d+)?)$', part)
+        if match:
+            name = match.group(1).strip().lower()
+            val = float(match.group(2))
+            res[name] = val
+    return res if res else None
+

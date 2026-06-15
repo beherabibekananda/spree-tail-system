@@ -6,7 +6,7 @@ from decimal import Decimal
 import csv
 import json
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 from .models import ImportSession, ImportAnomaly
 from .detector import detect_anomalies, get_fuzzy_match
@@ -175,6 +175,10 @@ def import_commit(request, session_id):
     
     known_names = ['aisha', 'rohan', 'priya', 'meera', 'sam', 'dev']
     users_cache = {u.username: u for u in User.objects.all()}
+    
+    # Load memberships of the group for dynamic date checks
+    group_memberships = GroupMembership.objects.filter(group=group).select_related('user')
+    membership_map = {m.user.username.lower(): m for m in group_memberships}
 
     # Commit transactions in a loop
     for idx, row in enumerate(rows):
@@ -218,6 +222,8 @@ def import_commit(request, session_id):
                         correct_payer = match.group(1).lower()
                 elif 'Default to equal split' in a.proposed_action:
                     correct_split_type = 'equal'
+                elif 'Normalize to exact split' in a.proposed_action:
+                    correct_split_type = 'exact'
             elif a.status == 'pending':
                 # Block commit if there are pending actions (Meera's requirement)
                 messages.error(request, f"Cannot commit import. Row {row_num} has pending anomalies that must be approved or rejected.")
@@ -264,8 +270,9 @@ def import_commit(request, session_id):
         if correct_split_type:
             split_type = correct_split_type
             
-        # Participants
-        parts_raw_list = [p.strip().lower() for p in row['participants'].split(',') if p.strip()]
+        # Participants (support split_with and semicolon separator)
+        parts_raw = row.get('participants') or row.get('split_with') or ''
+        parts_raw_list = [p.strip().lower() for p in parts_raw.replace(';', ',').split(',') if p.strip()]
         resolved_participants_list = []
         for p in parts_raw_list:
             p_match = get_fuzzy_match(p, known_names)
@@ -293,17 +300,34 @@ def import_commit(request, session_id):
         # Adjust participant list for ex-members / before-joins
         final_participants = []
         for p_name in resolved_participants_list:
-            # Check Meera's date check (left end of March)
-            if p_name == 'meera' and expense_date > datetime.strptime("2024-03-31", "%Y-%m-%d").date():
-                # If approved, we skip Meera. If rejected, we keep her (and she pays)
-                meera_anom = [a for a in row_anomalies if 'meera' in a.issue_description.lower() and 'exit' in a.issue_type]
-                if meera_anom and meera_anom[0].status == 'approved':
-                    continue # skip Meera
-            # Check Sam's date check (joined mid-April)
-            elif p_name == 'sam' and expense_date < datetime.strptime("2024-04-15", "%Y-%m-%d").date():
-                sam_anom = [a for a in row_anomalies if 'sam' in a.issue_description.lower() and 'join' in a.issue_type]
-                if sam_anom and sam_anom[0].status == 'approved':
-                    continue # skip Sam
+            # Dynamic membership check
+            m_record = membership_map.get(p_name)
+            if m_record:
+                joined_at = m_record.joined_at
+                left_at = m_record.left_at
+            else:
+                # Fallback to defaults based on the year of the expense date
+                year_val = expense_date.year
+                if p_name == 'meera':
+                    joined_at = date(year_val, 2, 1)
+                    left_at = date(year_val, 3, 31)
+                elif p_name == 'sam':
+                    joined_at = date(year_val, 4, 15)
+                    left_at = None
+                else:
+                    joined_at = date(year_val, 2, 1)
+                    left_at = None
+
+            if left_at and expense_date > left_at:
+                # If approved, we skip this member. If rejected, we keep them
+                exit_anom = [a for a in row_anomalies if p_name in a.issue_description.lower() and 'exit' in a.issue_type]
+                if exit_anom and exit_anom[0].status == 'approved':
+                    continue
+            elif joined_at and expense_date < joined_at:
+                # If approved, we skip this member. If rejected, we keep them
+                join_anom = [a for a in row_anomalies if p_name in a.issue_description.lower() and 'join' in a.issue_type]
+                if join_anom and join_anom[0].status == 'approved':
+                    continue
             final_participants.append(p_name)
             
         # Get active user instances for splits
@@ -315,8 +339,9 @@ def import_commit(request, session_id):
             # If no active members found, split among creator and payer as fallback
             active_pids = [paid_by.id]
             
-        # Parse custom splits data if present
-        custom_data = parse_custom_split(row['notes']) or {}
+        # Parse custom splits data if present (support split_details and notes)
+        split_details_str = row.get('split_details') or row.get('notes') or ''
+        custom_data = parse_custom_split(split_details_str) or {}
         # Convert custom_data keys to user IDs
         custom_data_ids = {}
         for username, val in custom_data.items():
